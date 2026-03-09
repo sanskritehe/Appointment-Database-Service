@@ -25,3 +25,20 @@ def create_appointment(user: str, time: str, db: Session = Depends(get_db)):
 @app.get("/appointments")
 def get_appointments(db: Session = Depends(get_db)):
     return db.query(Appointment).all()
+
+
+@app.delete("/appointments/{appointment_id}")
+def delete_appointment(appointment_id: int, db: Session = Depends(get_db)):
+
+    appointment = db.query(Appointment).filter(Appointment.id == appointment_id).first()
+
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+
+    db.delete(appointment)
+    db.commit()
+
+    return {
+        "message": "Appointment deleted successfully",
+        "appointment_id": appointment_id
+    }
