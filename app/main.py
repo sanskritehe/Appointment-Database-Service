@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .database import engine, SessionLocal, Base
 from .models import Appointment
@@ -26,6 +26,24 @@ def create_appointment(user: str, time: str, db: Session = Depends(get_db)):
 def get_appointments(db: Session = Depends(get_db)):
     return db.query(Appointment).all()
 
+@app.put("/appointments/{appointment_id}")
+def update_appointment(appointment_id: int, user: str = None, time: str = None, status: str = None, db: Session = Depends(get_db)):
+    appointment = db.query(Appointment).filter(Appointment.id == appointment_id).first()
+
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+
+    if user is not None:
+        appointment.user = user
+    if time is not None:
+        appointment.time = time
+    if status is not None:
+        appointment.status = status
+
+    db.commit()
+    db.refresh(appointment)
+
+    return appointment
 
 @app.delete("/appointments/{appointment_id}")
 def delete_appointment(appointment_id: int, db: Session = Depends(get_db)):
