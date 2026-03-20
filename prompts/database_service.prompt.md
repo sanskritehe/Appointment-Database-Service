@@ -1,284 +1,129 @@
-# Appointment Database Service – API Implementation Prompt
+# Generic Database Service
 
-You are an AI development agent working on the **Appointment-Database-Service** repository.
+You are an AI development agent working on a **Database Service repository**.
 
-Your task is to implement and maintain database APIs for managing appointment records.
+## Goal
 
----
-
-# Goal
-
-Implement APIs that allow the system to:
-
-* Create new appointments
-* Retrieve existing appointments
-* Delete appointments
-
-This service acts as the **data persistence layer** for the appointment system.
-
-The APIs will be consumed by the **Appointment-Service**, which contains the business logic layer.
+Implement CRUD APIs for a resource using a relational database.
+This service is responsible only for **data persistence**.
 
 ---
 
-# Technology Stack
+## Runtime Context (Provided Dynamically)
 
-The implementation must follow these technologies:
-
-* **FastAPI** for building REST APIs
-* **SQLAlchemy ORM** for database interaction
-* **SQLite** as the database engine
-* **Python dependency injection** using FastAPI `Depends`
-
-Database file:
-
-appointments.db
+* Resource: {resource}
+* Fields: {fields}
+* Database URL: {database_url}
 
 ---
 
-# Database Configuration
+## Responsibilities
 
-The database connection is defined in **database.py**.
+Implement:
 
-The database URL must be:
-
-sqlite:///./appointments.db
-
-The engine must be created using:
-
-* `create_engine`
-* `connect_args={"check_same_thread": False}`
-
-Database sessions must be created using:
-
-SessionLocal = sessionmaker(bind=engine)
-
-The base class for ORM models must be:
-
-Base = declarative_base()
+* Create resource
+* Read all resources
+* Read resource by ID
+* Update resource
+* Delete resource
 
 ---
 
-# Data Model
+## Tech Stack
 
-Appointments are stored using a SQLAlchemy model.
-
-Table name:
-
-appointments
-
-Fields:
-
-id
-
-* Integer
-* Primary Key
-* Auto Increment
-
-user
-
-* String
-* Represents the user booking the appointment
-
-time
-
-* String
-* Represents the appointment time slot
-
-status
-
-* String
-* Default value: "booked"
-
-Example model structure:
-
-class Appointment(Base):
-**tablename** = "appointments"
-
-```
-id = Column(Integer, primary_key=True, index=True)
-user = Column(String, index=True)
-time = Column(String)
-status = Column(String, default="booked")
-```
+* FastAPI
+* SQLAlchemy (ORM)
+* Relational DB (SQLite or configured)
 
 ---
 
-# Database Initialization
+## APIs
 
-When the application starts, ensure that database tables are created using:
+### Create
 
-Base.metadata.create_all(bind=engine)
+POST /{resource}
 
----
-
-# Dependency Injection
-
-Database sessions must be accessed using FastAPI dependency injection.
-
-Use the following pattern:
-
-db: Session = Depends(get_db)
-
-The `get_db()` function should:
-
-* Create a database session using SessionLocal
-* Yield the session
-* Close the session after the request finishes
+* Insert record into DB
+* Apply default values if needed
+* Return created entity
 
 ---
 
-# APIs to Implement
+### Read All
 
-## 1. Create Appointment
+GET /{resource}
 
-Endpoint:
-
-POST /appointments
-
-Purpose:
-
-Create a new appointment in the database.
-
-Flow:
-
-1. Accept `user` and `time` parameters.
-2. Create an Appointment object.
-3. Set default status to `"booked"`.
-4. Insert the record into the database.
-5. Commit the transaction.
-6. Refresh the object.
-7. Return the created appointment.
-
-Expected behavior:
-
-* The appointment should be persisted in SQLite.
-* Return the inserted record as JSON.
+* Fetch all records
+* Return list
 
 ---
 
-## 2. Get All Appointments
+### Read by ID
 
-Endpoint:
+GET /{resource}/{id}
 
-GET /appointments
-
-Purpose:
-
-Fetch all appointments stored in the database.
-
-Flow:
-
-1. Query the appointments table.
-2. Retrieve all records.
-3. Return the list as JSON.
-
-Expected behavior:
-
-Return a list of appointment objects.
+* Fetch single record
+* Return 404 if not found
 
 ---
 
-## 3. Delete Appointment
+### Update
 
-Endpoint:
+PUT /{resource}/{id}
 
-DELETE /appointments/{appointment_id}
+* Update existing record
+* Return updated entity
 
-Purpose:
+---
 
-Remove an appointment from the database.
+### Delete
 
-Flow:
+DELETE /{resource}/{id}
 
-1. Query the appointment using the provided ID.
-2. If the appointment does not exist:
+* Delete or soft delete
+* Return confirmation
 
-   * Raise HTTPException with status code **404**.
-3. Delete the appointment from the database.
-4. Commit the transaction.
-5. Return a confirmation response.
+Example:
 
-Example response:
-
+```json
 {
-"message": "Appointment deleted successfully",
-"appointment_id": 5
+  "message": "Deleted successfully",
+  "id": 1
 }
+```
 
 ---
 
-# Error Handling
-
-If an appointment is not found, raise:
-
-HTTPException(status_code=404, detail="Appointment not found")
-
-Ensure proper JSON responses are returned.
-
----
-
-# Project Structure
-
-Follow the existing repository structure.
+## Architecture
 
 app/
-
-database.py
-
-* database engine configuration
-* session management
-
-models.py
-
-* SQLAlchemy models
-
-main.py
-
-* FastAPI application
-* API routes
+├─ models/
+├─ database.py
+└─ main.py
 
 ---
 
-# Implementation Rules
+## Implementation Rules
 
-* Follow FastAPI best practices.
-* Use SQLAlchemy ORM queries for all database operations.
-* Use dependency injection for database sessions.
-* Return JSON responses for all APIs.
-* Ensure proper error handling.
-* Keep code modular and clean.
-
----
-
-# After Implementation
-
-Once the feature is implemented:
-
-1. Create a new Git branch
-
-feature/delete-appointment-db-api
-
-2. Stage code changes
-
-git add .
-
-3. Commit the changes
-
-git commit -m "Add delete appointment API for database service"
-
-4. Push the branch
-
-git push origin feature/delete-appointment-db-api
-
-5. Create a Pull Request to merge into the main branch.
+* Use SQLAlchemy ORM
+* Use dependency injection for DB session
+* Validate input data
+* Handle errors (404, invalid input)
+* Return JSON responses
 
 ---
 
-# Expected Outcome
+## Validation
 
-After implementation:
+* Ensure all CRUD APIs work
+* Validate schema during create/update
+* Handle missing records gracefully
 
-* Appointment records can be created
-* Appointment records can be retrieved
-* Appointment records can be deleted
-* The database service works correctly with the Appointment-Service
+---
+
+## After Implementation
+
+* Create feature branch
+* Commit changes
+* Push to repository
+* Create Pull Request
