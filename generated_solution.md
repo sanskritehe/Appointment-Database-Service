@@ -1,3 +1,5 @@
+### FILE: app/graphql_schema.py
+```python
 import strawberry
 from typing import Optional
 from app.database import SessionLocal
@@ -76,3 +78,76 @@ class Mutation:
 
 schema = strawberry.federation.Schema(query=Query, mutation=Mutation, enable_federation_2=True)
 
+```
+
+### FILE: app/models.py
+```python
+from sqlalchemy import Column, Integer, String
+from .database import Base
+
+class Appointment(Base):
+    __tablename__ = "appointments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user = Column(String, index=True)
+    time = Column(String)
+    status = Column(String, default="booked")
+```
+
+### FILE: tests/test_graphql.py
+```python
+import pytest
+from fastapi.testclient import TestClient
+from app.main import app
+
+@pytest.fixture
+def client():
+    return TestClient(app)
+
+def test_appointment_by_id_found(client):
+    # Create a test appointment
+    response = client.post("/graphql", json={
+        "query": """
+            mutation {
+                storeAppointment(user: "test_user", time: "test_time") {
+                    id
+                    user
+                    time
+                    status
+                }
+            }
+        """
+    })
+    appointment_id = response.json()["data"]["storeAppointment"]["id"]
+
+    # Query the appointment by ID
+    response = client.post("/graphql", json={
+        "query": f"""
+            query {
+                appointmentById(id: {appointment_id}) {
+                    id
+                    user
+                    time
+                    status
+                }
+            }
+        """
+    })
+    assert response.json()["data"]["appointmentById"] is not None
+
+def test_appointment_by_id_not_found(client):
+    # Query a non-existent appointment by ID
+    response = client.post("/graphql", json={
+        "query": """
+            query {
+                appointmentById(id: 99999) {
+                    id
+                    user
+                    time
+                    status
+                }
+            }
+        """
+    })
+    assert response.json()["data"]["appointmentById"] is None
+```
