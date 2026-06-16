@@ -34,6 +34,17 @@ class Query:
         finally:
             db.close()
 
+    @strawberry.field
+    def appointment_by_id(self, id: int) -> Optional[AppointmentStorage]:
+        db = SessionLocal()
+        try:
+            r = db.query(AppointmentModel).filter(AppointmentModel.id == id).first()
+            if r:
+                return AppointmentStorage(id=r.id, user=r.user, time=r.time, status=r.status)
+            return None
+        finally:
+            db.close()
+
 
 @strawberry.type
 class Mutation:
@@ -64,3 +75,4 @@ class Mutation:
 
 
 schema = strawberry.federation.Schema(query=Query, mutation=Mutation, enable_federation_2=True)
+
