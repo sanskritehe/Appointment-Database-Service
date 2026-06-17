@@ -1,10 +1,11 @@
 from sqlalchemy import Column, Integer, String
 from .database import Base
 
-class Appointment(Base):
-    __tablename__ = "appointments"
+class Repo(Base):
+    __tablename__ = "repos"
 
     id = Column(Integer, primary_key=True, index=True)
-    user = Column(String, index=True)
-    time = Column(String)
-    status = Column(String, default="booked")
+    name = Column(String)
+    url = Column(String)
+    owner = Column(String)
+    last_updated = Column(String)
